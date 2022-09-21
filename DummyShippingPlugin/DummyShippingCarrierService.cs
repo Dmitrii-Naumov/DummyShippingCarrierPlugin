@@ -31,6 +31,7 @@ namespace DummyShippingPlugin
         {
             methods = new List<CarrierMethod>();
             methods.Add(GetDefaultCarrierMethod());
+            methods.Add(GetAdditionalCarrierMethod());
 
             attributes = new List<string>(0);
         }
@@ -185,7 +186,32 @@ namespace DummyShippingPlugin
 
         public CarrierResult<IList<RateQuote>> GetRateList(CarrierRequest request)
         {
-            throw new NotImplementedException();
+            try
+            {
+                string message = "GetRateQuote request: \r\n";
+                ExecuteRequest(message, request);
+
+                return new CarrierResult<IList<RateQuote>>(
+                    new List<RateQuote>() 
+                    {
+                        new RateQuote(
+                            "USD",
+                            10,
+                            GetDefaultCarrierMethod(),
+                            DateTime.Now.AddDays(2)),
+                        new RateQuote(
+                            "USD",
+                            5,
+                            GetAdditionalCarrierMethod(),
+                            DateTime.Now.AddDays(5))
+                    }
+                    );
+            }
+
+            catch (Exception ex)
+            {
+                return new CarrierResult<IList<RateQuote>>(false, null, new Message("Error", ex.Message));
+            }
         }
 
         public CarrierResult<IList<CarrierCertificationData>> GetCertificationData()
@@ -217,6 +243,10 @@ namespace DummyShippingPlugin
         private static CarrierMethod GetDefaultCarrierMethod()
         {
             return new CarrierMethod(Constants.MethodCode, Constants.MethodDescription);
+        }
+        private static CarrierMethod GetAdditionalCarrierMethod()
+        {
+            return new CarrierMethod(Constants.AdditionalMethodCode, Constants.AdditionalMethodDescription);
         }
         #endregion
     }

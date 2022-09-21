@@ -17,5 +17,7 @@ namespace DummyShippingPlugin
 
         public const string MethodCode = "2DaysAir";
         public const string MethodDescription = "Delivery in 2 days by a plane";
+        public const string AdditionalMethodCode = "5BDaysGroud";
+        public const string AdditionalMethodDescription = "Delivery in 5 days by a truck";
     }
 }
