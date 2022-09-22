@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 using Newtonsoft.Json;
 
 using PX.CarrierService;
 using PX.Data;
 using PX.SM;
-
-using static PX.FS.FSGPSTrackingRequest;
 
 namespace DummyShippingPlugin
 {
@@ -35,7 +34,6 @@ namespace DummyShippingPlugin
 
             attributes = new List<string>(0);
         }
-
 
         public IList<string> Attributes
         {
@@ -122,12 +120,9 @@ namespace DummyShippingPlugin
                 string message = "Return request: \r\n";
                 ExecuteRequest(message, request);
 
-                return new CarrierResult<ShipResult>(new ShipResult( 
-                    new RateQuote(
-                        "USD",
-                        10,
-                        GetDefaultCarrierMethod(),
-                        DateTime.Now.AddDays(2))
+                return new CarrierResult<ShipResult>(new ShipResult(
+                   GetListOfShipingMethods().First(rateQuote => rateQuote.Method.Code == this.Method)
+
                 ));
             }
 
@@ -149,11 +144,7 @@ namespace DummyShippingPlugin
                 ExecuteRequest(message, request);
 
                 return new CarrierResult<ShipResult>(new ShipResult(
-                    new RateQuote(
-                        "USD",
-                        10,
-                        GetDefaultCarrierMethod(),
-                        DateTime.Now.AddDays(2))
+                    GetListOfShipingMethods().First(rateQuote => rateQuote.Method.Code == this.Method)
                 ));
             }
 
@@ -170,12 +161,8 @@ namespace DummyShippingPlugin
                 ExecuteRequest(message, request);
 
                 return new CarrierResult<RateQuote>(
-                    new RateQuote(
-                        "USD",
-                        10,
-                        GetDefaultCarrierMethod(),
-                        DateTime.Now.AddDays(2)
-                ));
+                    GetListOfShipingMethods().First(rateQuote => rateQuote.Method.Code == this.Method)
+                );
             }
 
             catch (Exception ex)
@@ -192,19 +179,7 @@ namespace DummyShippingPlugin
                 ExecuteRequest(message, request);
 
                 return new CarrierResult<IList<RateQuote>>(
-                    new List<RateQuote>() 
-                    {
-                        new RateQuote(
-                            "USD",
-                            10,
-                            GetDefaultCarrierMethod(),
-                            DateTime.Now.AddDays(2)),
-                        new RateQuote(
-                            "USD",
-                            5,
-                            GetAdditionalCarrierMethod(),
-                            DateTime.Now.AddDays(5))
-                    }
+                        GetListOfShipingMethods()
                     );
             }
 
@@ -214,6 +189,7 @@ namespace DummyShippingPlugin
             }
         }
 
+     
         public CarrierResult<IList<CarrierCertificationData>> GetCertificationData()
         {
             throw new NotImplementedException();
@@ -240,10 +216,29 @@ namespace DummyShippingPlugin
                 }
             }
         }
+
+        private static List<RateQuote> GetListOfShipingMethods()
+        {
+            return new List<RateQuote>()
+                    {
+                        new RateQuote(
+                            "USD",
+                            10,
+                            GetDefaultCarrierMethod(),
+                            DateTime.Now.AddDays(2)),
+                        new RateQuote(
+                            "USD",
+                            5,
+                            GetAdditionalCarrierMethod(),
+                            DateTime.Now.AddDays(5))
+                    };
+        }
+
         private static CarrierMethod GetDefaultCarrierMethod()
         {
             return new CarrierMethod(Constants.MethodCode, Constants.MethodDescription);
         }
+
         private static CarrierMethod GetAdditionalCarrierMethod()
         {
             return new CarrierMethod(Constants.AdditionalMethodCode, Constants.AdditionalMethodDescription);
