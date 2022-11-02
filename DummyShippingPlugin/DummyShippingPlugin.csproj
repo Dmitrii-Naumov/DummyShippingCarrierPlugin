@@ -33,12 +33,15 @@
   <ItemGroup>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="PX.CarrierService">
       <HintPath>..\..\..\..\..\Acumatica Sites\22r100\Bin\PX.CarrierService.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="PX.Data">
       <HintPath>..\..\..\..\..\Acumatica Sites\22r100\Bin\PX.Data.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -56,6 +59,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Customs Declaration.pdf" />
+    <EmbeddedResource Include="Label.pdf" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

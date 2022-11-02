@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 
 using Newtonsoft.Json;
 
 using PX.CarrierService;
 using PX.Data;
 using PX.SM;
+
+using static PX.Data.BQL.BqlPlaceholder;
 
 namespace DummyShippingPlugin
 {
@@ -91,7 +95,7 @@ namespace DummyShippingPlugin
             }
             catch (Exception ex)
             {
-                return new CarrierResult<string>(false,"Error" , new Message("Error", ex.Message));
+                return new CarrierResult<string>(false, "Error", new Message("Error", ex.Message));
             }
         }
 
@@ -105,7 +109,7 @@ namespace DummyShippingPlugin
             }
             catch (Exception ex)
             {
-                return new CarrierResult<string>(false, null,new Message("Error", ex.Message));
+                return new CarrierResult<string>(false, null, new Message("Error", ex.Message));
             }
         }
 
@@ -117,7 +121,7 @@ namespace DummyShippingPlugin
                 {
                     throw new InvalidOperationException("CarrierRequest.Packages must contain at least one Package");
                 }
-                string message = "Return request: \r\n";
+                string message = $"Return request for method {this.Method}: \r\n";
                 ExecuteRequest(message, request);
 
                 return new CarrierResult<ShipResult>(new ShipResult(
@@ -140,12 +144,24 @@ namespace DummyShippingPlugin
                 {
                     throw new InvalidOperationException("CarrierRequest.Packages must contain at least one Package");
                 }
-                string message = "Ship request: \r\n";
+                string message = $"Ship request for method {this.Method}: \r\n";
                 ExecuteRequest(message, request);
 
-                return new CarrierResult<ShipResult>(new ShipResult(
-                    GetListOfShipingMethods().First(rateQuote => rateQuote.Method.Code == this.Method)
-                ));
+                var result = new CarrierResult<ShipResult>(new ShipResult(
+                     GetListOfShipingMethods().First(rateQuote => rateQuote.Method.Code == this.Method)
+
+                 ));
+                int trackingNbr = 12345;
+                string shipmentNbr =
+                    request.Attributes.Where(_ => _.StartsWith("ShipmentNbr:")).FirstOrDefault()
+                    ?? DateTime.Now.ToString();
+                foreach (var package in request.Packages)
+                {
+                    trackingNbr++;
+                    result.Result.Data.Add(new PackageData(package.RefNbr, shipmentNbr+ trackingNbr.ToString(), ReadResource("Label.pdf"), "pdf"));
+                    result.Result.Data.Add(new PackageData(package.RefNbr, shipmentNbr+ trackingNbr.ToString() + "c", ReadResource("Customs Declaration.pdf"), "pdf"));
+                }
+                return result;
             }
 
             catch (Exception ex)
@@ -157,7 +173,7 @@ namespace DummyShippingPlugin
         {
             try
             {
-                string message = "GetRateQuote request: \r\n";
+                string message = $"GetRateQuote request for method {this.Method}: \r\n";
                 ExecuteRequest(message, request);
 
                 return new CarrierResult<RateQuote>(
@@ -189,7 +205,7 @@ namespace DummyShippingPlugin
             }
         }
 
-     
+
         public CarrierResult<IList<CarrierCertificationData>> GetCertificationData()
         {
             throw new NotImplementedException();
@@ -242,6 +258,23 @@ namespace DummyShippingPlugin
         private static CarrierMethod GetAdditionalCarrierMethod()
         {
             return new CarrierMethod(Constants.AdditionalMethodCode, Constants.AdditionalMethodDescription);
+        }
+        #endregion
+        #region Helper
+        public byte[] ReadResource(string name)
+        {
+            // Determine path
+            var assembly = Assembly.GetExecutingAssembly();
+            string resourcePath = name;
+
+            resourcePath = assembly.GetManifestResourceNames()
+                .Single(str => str.EndsWith(name));
+
+            using (Stream stream = assembly.GetManifestResourceStream(resourcePath))
+            using (BinaryReader reader = new BinaryReader(stream))
+            {
+                return reader.ReadBytes((int)stream.Length);
+            }
         }
         #endregion
     }
